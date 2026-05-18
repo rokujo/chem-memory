@@ -21,7 +21,7 @@ const SKIP_SPECIES = new Set(['H₂O', 'H⁺', 'e⁻', 'OH⁻']);
 // 化学種から「主要元素」(H,Oを除く元素記号)の集合を取り出す。
 // H/O のみの化学式 (H₂O₂, O₂, O₃ 等) は O を主要元素として返す。
 function mainElements(species: string): Set<string> {
-  const matches = species.match(/[A-Z][a-z]?/g) ?? [];
+  const matches: string[] = species.match(/[A-Z][a-z]?/g) ?? [];
   const filtered = matches.filter(e => e !== 'H' && e !== 'O');
   if (filtered.length === 0 && matches.includes('O')) return new Set(['O']);
   return new Set(filtered);

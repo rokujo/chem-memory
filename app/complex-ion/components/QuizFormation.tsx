@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Check, X, RefreshCw } from 'lucide-react';
 import type { Complex } from '../types';
-import { COMPLEXES } from '../lib/data';
+import { COMPLEXES, complexCharge, formatComplexFormula } from '../lib/data';
 import { ChipSwatch } from './ChipSwatch';
 import { QuizScore } from './QuizFeedback';
 import { loadProgress, recordAnswer, saveProgress, isEligibleToday, getEntry } from '../lib/progress';
@@ -14,35 +14,57 @@ type Question = {
   correct: string;
 };
 
+// ダミーは「同じ中心 + 同じ配位子」で配位数 or 電荷だけ違うものに揃える。
+// 中心や配位子が違うと選択肢の段階で即除外されてしまい、教育的価値が低いため。
+const COORD_CANDIDATES = [2, 4, 6];
+
 function build(): Question {
   const progress = loadProgress();
   const eligible = COMPLEXES.filter(c => isEligibleToday(getEntry(progress, c.id)));
   const pool = eligible.length > 0 ? eligible : COMPLEXES;
   const complex = pool[Math.floor(Math.random() * pool.length)];
 
-  // ダミー優先度:
-  //   1. 同じ配位子の他の錯イオン(混同しやすい)
-  //   2. 同じ中心金属の他の錯イオン
-  //   3. それ以外
-  const others = COMPLEXES.filter(c => c.id !== complex.id);
-  const sameLigand = others.filter(c => c.ligand === complex.ligand);
-  const sameCenter = others.filter(c => c.center === complex.center);
-  const ordered = [
-    ...sameLigand.sort(() => Math.random() - 0.5),
-    ...sameCenter.filter(c => c.ligand !== complex.ligand).sort(() => Math.random() - 0.5),
-    ...others
-      .filter(c => c.ligand !== complex.ligand && c.center !== complex.center)
-      .sort(() => Math.random() - 0.5),
-  ];
+  const correctCharge = complexCharge(complex);
   const used = new Set<string>([complex.formula]);
   const distractors: string[] = [];
-  for (const c of ordered) {
-    if (used.has(c.formula)) continue;
-    used.add(c.formula);
-    distractors.push(c.formula);
-    if (distractors.length >= 3) break;
+
+  // 配位数違いダミー(同じ中心・同じ配位子・同じ電荷、配位数だけ変える)
+  const otherCoords = COORD_CANDIDATES
+    .filter(n => n !== complex.coord_number)
+    .sort(() => Math.random() - 0.5);
+  for (const n of otherCoords) {
+    const f = formatComplexFormula(complex.center, complex.ligand, n, correctCharge);
+    if (used.has(f)) continue;
+    used.add(f);
+    distractors.push(f);
+    if (distractors.length >= 2) break;
   }
-  const options = [complex.formula, ...distractors].sort(() => Math.random() - 0.5);
+
+  // 電荷違いダミー(同じ中心・同じ配位子・同じ配位数、電荷の絶対値を +1 する方向)
+  const wrongCharge = correctCharge > 0 ? correctCharge + 1 : correctCharge - 1;
+  const chargeDist = formatComplexFormula(
+    complex.center,
+    complex.ligand,
+    complex.coord_number,
+    wrongCharge,
+  );
+  if (!used.has(chargeDist)) {
+    used.add(chargeDist);
+    distractors.push(chargeDist);
+  }
+
+  // 念のための補充(配位数候補が足りない等のレアケース対策)
+  if (distractors.length < 3) {
+    for (const n of [3, 5]) {
+      const f = formatComplexFormula(complex.center, complex.ligand, n, correctCharge);
+      if (used.has(f)) continue;
+      used.add(f);
+      distractors.push(f);
+      if (distractors.length >= 3) break;
+    }
+  }
+
+  const options = [complex.formula, ...distractors.slice(0, 3)].sort(() => Math.random() - 0.5);
   return { complex, options, correct: complex.formula };
 }
 

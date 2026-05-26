@@ -121,3 +121,65 @@ export function byLigand(ligand: Ligand): Complex[] {
 export function findById(id: string): Complex | undefined {
   return COMPLEXES.find(c => c.id === id);
 }
+
+// ===== 組成式の構造化ヘルパー(クイズのダミー生成用) =====
+
+const SUBSCRIPT = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+const SUPERSCRIPT = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+const SUPERSCRIPT_REVERSE: Record<string, number> = {
+  '⁰': 0, '¹': 1, '²': 2, '³': 3, '⁴': 4, '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9,
+};
+
+// 中心金属の電荷(Cu²⁺ → +2, Ag⁺ → +1)を取り出す
+export function centerCharge(center: string): number {
+  const match = center.match(/([⁰¹²³⁴⁵⁶⁷⁸⁹]*)([⁺⁻])$/);
+  if (!match) return 0;
+  const numStr = match[1];
+  const sign = match[2] === '⁺' ? 1 : -1;
+  const num = numStr === '' ? 1 : (SUPERSCRIPT_REVERSE[numStr] ?? 1);
+  return sign * num;
+}
+
+// 配位子1個あたりの電荷
+function ligandCharge(ligand: Ligand): number {
+  if (ligand === 'NH₃') return 0;
+  return -1; // CN⁻ / OH⁻
+}
+
+// 錯イオン全体の電荷を計算
+export function complexCharge(complex: Complex): number {
+  return centerCharge(complex.center) + complex.coord_number * ligandCharge(complex.ligand);
+}
+
+function ligandInnerRepr(ligand: Ligand): string {
+  // 組成式の中の配位子表記(電荷を除いた文字列)
+  if (ligand === 'NH₃') return 'NH₃';
+  if (ligand === 'CN⁻') return 'CN';
+  return 'OH';
+}
+
+function formatCharge(charge: number): string {
+  if (charge === 0) return '';
+  const abs = Math.abs(charge);
+  const sign = charge > 0 ? '⁺' : '⁻';
+  const num = abs === 1 ? '' : SUPERSCRIPT[abs];
+  return num + sign;
+}
+
+// 中心金属の元素記号のみ取り出す(Cu²⁺ → Cu, Fe³⁺ → Fe)
+function centerElement(center: string): string {
+  return center.match(/^[A-Z][a-z]?/)?.[0] ?? center;
+}
+
+// 組成式の文字列を生成。中心+配位子+配位数+電荷を指定。
+// 配位数1のときは下付き省略([Fe(CN)]^? のような表記にはしない方が自然なので
+// 本実装では配位数は常に2/4/6 を想定し1の場合は使わない)。
+export function formatComplexFormula(
+  center: string,
+  ligand: Ligand,
+  coordNumber: number,
+  charge: number,
+): string {
+  const sub = coordNumber === 1 ? '' : SUBSCRIPT[coordNumber] ?? String(coordNumber);
+  return `[${centerElement(center)}(${ligandInnerRepr(ligand)})${sub}]${formatCharge(charge)}`;
+}

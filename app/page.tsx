@@ -33,9 +33,9 @@ const UNITS: Unit[] = [
   {
     href: '/complex-ion',
     title: '錯イオン形成',
-    description: '組成式と色の暗記',
+    description: 'NH₃ / CN⁻ / OH⁻ 配位の錯イオン。組成式と色の暗記',
     accent: 'blue',
-    status: 'planned',
+    status: 'ready',
   },
   {
     href: '/flame',

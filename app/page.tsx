@@ -4,7 +4,7 @@ type Unit = {
   href: string;
   title: string;
   description: string;
-  accent: 'blue' | 'green' | 'orange';
+  accent: 'blue' | 'green' | 'orange' | 'red';
   status: 'ready' | 'wip' | 'planned';
 };
 
@@ -40,9 +40,9 @@ const UNITS: Unit[] = [
   {
     href: '/flame',
     title: '炎色反応',
-    description: '視覚的に印象的な対応表',
-    accent: 'blue',
-    status: 'planned',
+    description: 'アルカリ金属・アルカリ土類金属・銅。花火の色と結びつけて',
+    accent: 'red',
+    status: 'ready',
   },
 ];
 
@@ -50,6 +50,7 @@ const ACCENT_BORDER: Record<Unit['accent'], string> = {
   blue: 'border-blue-500/30 hover:border-blue-500/60',
   green: 'border-emerald-500/30 hover:border-emerald-500/60',
   orange: 'border-orange-500/30 hover:border-orange-500/60',
+  red: 'border-rose-500/30 hover:border-rose-500/60',
 };
 
 const STATUS_LABEL: Record<Unit['status'], { label: string; cls: string }> = {

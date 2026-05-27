@@ -44,6 +44,20 @@ const UNITS: Unit[] = [
     accent: 'red',
     status: 'ready',
   },
+  {
+    href: '/electrolysis',
+    title: '電気分解',
+    description: '電解液 × 電極の組合せで陰極・陽極に何が生じるか',
+    accent: 'orange',
+    status: 'ready',
+  },
+  {
+    href: '/ion-valence',
+    title: '金属イオンの価数',
+    description: '主要金属18元素の取り得る価数。多価金属の暗記が中心',
+    accent: 'orange',
+    status: 'ready',
+  },
 ];
 
 const ACCENT_BORDER: Record<Unit['accent'], string> = {
